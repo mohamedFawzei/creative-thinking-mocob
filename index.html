@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FacePay Pro Prototype</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-color: #00ffaa; /* لون النيون الأخضر */
+        --bg-dark: #0a0a0a;
+        --card-dark: rgba(255, 255, 255, 0.08);
+        --text-muted: #888;
+      }
+
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #1a1a1a;
+        font-family: "Cairo", sans-serif;
+        overflow: hidden;
+      }
+
+      /* --- تصميم إطار الموبايل الواقعي --- */
+      .phone-frame {
+        width: 360px;
+        height: 740px;
+        background: var(--bg-dark);
+        border-radius: 40px;
+        box-shadow: 0 0 0 5px #222, /* الإطار الخارجي */ 0 0 0 7px #000,
+          /* حافة الشاشة */ 0 20px 40px rgba(0, 0, 0, 0.6); /* الظل */
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #333;
+      }
+
+      /* النوتش العلوي (Dynamic Island style) */
+      .notch {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 28px;
+        background: #000;
+        border-radius: 20px;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+      }
+      .notch::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: #1a1a1a;
+        border-radius: 50%;
+        box-shadow: inset 0 0 2px #000;
+      } /* الكاميرا */
+      .notch::after {
+        content: "";
+        width: 40px;
+        height: 6px;
+        background: #1a1a1a;
+        border-radius: 5px;
+        box-shadow: inset 0 0 2px #000;
+      } /* السماعة */
+
+      /* شريط الحالة (وقت وبطارية) */
+      .status-bar {
+        padding: 15px 20px 5px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      /* --- محتوى الشاشات --- */
+      .screen-content {
+        height: calc(100% - 130px); /* خصم مساحة النوتش والنافبار */
+        overflow-y: auto;
+        padding: 20px;
+        color: #fff;
+        display: none; /* مخفي افتراضياً */
+        flex-direction: column;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      .screen-content.active {
+        display: flex;
+      }
+
+      /* عناوين */
+      .header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+      .header p {
+        margin: 5px 0 20px;
+        color: var(--text-muted);
+      }
+
+      /* كارت الرصيد (Glassmorphism Effect) */
+      .balance-card {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.1),
+          rgba(255, 255, 255, 0.05)
+        );
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 25px;
+        margin-bottom: 25px;
+      }
+      .balance-amount {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+      }
+
+      /* زر الدفع الرئيسي */
+      .main-action-btn {
+        background: var(--primary-color);
+        color: #000;
+        border: none;
+        width: 100%;
+        padding: 18px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border-radius: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 5px 15px rgba(0, 255, 170, 0.3);
+        transition: 0.2s;
+      }
+      .main-action-btn:active {
+        transform: scale(0.98);
+      }
+
+      /* قائمة آخر العمليات (ميزة جديدة) */
+      .history-section h3 {
+        margin-bottom: 15px;
+      }
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-dark);
+        padding: 12px;
+        border-radius: 15px;
+        margin-bottom: 10px;
+      }
+      .history-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 255, 170, 0.1);
+        color: var(--primary-color);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+      }
+
+      /* --- شريط التنقل السفلي (ميزة جديدة) --- */
+      .bottom-nav {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 70px;
+        background: #111;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        border-top: 1px solid #222;
+        padding-bottom: 10px; /* عشان الـ safe area في الايفون */
+      }
+      .nav-item {
+        color: var(--text-muted);
+        text-align: center;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .nav-item.active {
+        color: var(--primary-color);
+      }
+      .nav-item i {
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+        display: block;
+      }
+
+      /* --- شاشة المسح (Scanning) --- */
+      .camera-viewfinder {
+        flex: 1;
+        background: url("https://img.freepik.com/free-photo/close-up-portrait-young-bearded-man-face_171337-2887.jpg")
+          no-repeat center/cover;
+        border-radius: 30px;
+        position: relative;
+        overflow: hidden;
+        margin: 20px 0;
+        filter: grayscale(80%) brightness(0.8);
+      }
+      /* إطار تحديد الوجه */
+      .face-guide {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 220px;
+        height: 280px;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        border-radius: 40% 40% 50% 50%; /* شكل بيضاوي للوجه */
+        box-shadow: 0 0 20px rgba(0, 255, 170, 0.2);
+      }
+      /* خط المسح المتحرك */
+      .scan-laser {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--primary-color);
+        box-shadow: 0 0 15px var(--primary-color);
+        animation: scanDown 2s infinite ease-in-out;
+      }
+
+      /* --- شاشة النجاح (Success) --- */
+      .success-animation {
+        font-size: 5rem;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+      .receipt-card {
+        background: var(--card-dark);
+        padding: 20px;
+        border-radius: 20px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        color: var(--text-muted);
+      }
+      .receipt-row.total {
+        color: #fff;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-top: 15px;
+        pt: 10px;
+        border-top: 1px solid #333;
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes scanDown {
+        0% {
+          top: 10%;
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          top: 90%;
+          opacity: 0;
+        }
+      }
+      @keyframes popIn {
+        0% {
+          transform: scale(0);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="phone-frame">
+      <div class="notch"></div>
+      <div class="status-bar">
+        <div>9:41 AM</div>
+        <div>
+          <i class="fas fa-wifi"></i>
+          <i class="fas fa-battery-three-quarters"></i>
+        </div>
+      </div>
+
+      <div class="screen-content active" id="homeScreen">
+        <div class="header">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <h2>مرحباً، محمد 👋</h2>
+            <i class="fas fa-bell" style="color: var(--text-muted)"></i>
+          </div>
+          <p>جاهز لرحلتك النهاردة؟</p>
+        </div>
+
+        <div class="balance-card">
+          <div style="color: var(--text-muted); margin-bottom: 5px">
+            الرصيد المتاح
+          </div>
+          <div class="balance-amount">1,250.00 ج.م</div>
+          <div
+            style="
+              color: var(--text-muted);
+              font-size: 0.8rem;
+              margin-top: 10px;
+            "
+          >
+            <i class="fab fa-cc-visa"></i> •••• 4021
+          </div>
+        </div>
+
+        <button class="main-action-btn" onclick="goToScan()">
+          <i class="fas fa-face-viewfinder" style="font-size: 1.5rem"></i>
+          اضغط للدفع بالوجه
+        </button>
+
+        <div class="history-section" style="margin-top: 25px">
+          <h3>آخر الرحلات</h3>
+          <div class="history-item">
+            <div style="display: flex; align-items: center">
+              <div class="history-icon"><i class="fas fa-subway"></i></div>
+              <div>
+                <div style="font-weight: bold">مترو الأنفاق</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted)">
+                  أمس، 8:30 ص
+                </div>
+              </div>
+            </div>
+            <div style="font-weight: bold; color: #ff4757">- 10.00 ج.م</div>
+          </div>
+          <div class="history-item">
+            <div style="display: flex; align-items: center">
+              <div
+                class="history-icon"
+                style="background: rgba(0, 114, 255, 0.1); color: #0072ff"
+              >
+                <i class="fas fa-bus"></i>
+              </div>
+              <div>
+                <div style="font-weight: bold">مواصلات مصر</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted)">
+                  أمس، 5:15 م
+                </div>
+              </div>
+            </div>
+            <div style="font-weight: bold; color: #ff4757">- 15.00 ج.م</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-content" id="scanScreen" style="text-align: center">
+        <h3 style="margin-top: 10px">التحقق من الهوية</h3>
+        <p style="color: var(--text-muted)">من فضلك انظر للكاميرا مباشرة</p>
+
+        <div class="camera-viewfinder">
+          <div class="face-guide"></div>
+          <div class="scan-laser"></div>
+        </div>
+
+        <button
+          onclick="cancelScan()"
+          style="
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 15px;
+            cursor: pointer;
+          "
+        >
+          إلغاء
+        </button>
+      </div>
+
+      <div
+        class="screen-content"
+        id="successScreen"
+        style="justify-content: center; align-items: center; text-align: center"
+      >
+        <div class="success-animation"><i class="fas fa-check-circle"></i></div>
+        <h2 style="color: var(--primary-color)">تم الدفع بنجاح!</h2>
+        <p style="margin-bottom: 30px">رحلة سعيدة وآمنة</p>
+
+        <div class="receipt-card">
+          <div class="receipt-row">
+            <span>الخدمة</span> <span>تذكرة مترو</span>
+          </div>
+          <div class="receipt-row"><span>التاريخ</span> <span>الآن</span></div>
+          <div class="receipt-row">
+            <span>رقم العملية</span> <span>#TRX-98745</span>
+          </div>
+          <div class="receipt-row total">
+            <span>الإجمالي</span>
+            <span style="color: var(--primary-color)">10.00 ج.م</span>
+          </div>
+        </div>
+
+        <button
+          class="main-action-btn"
+          onclick="resetApp()"
+          style="
+            margin-top: 30px;
+            background: var(--card-dark);
+            color: #fff;
+            box-shadow: none;
+          "
+        >
+          العودة للرئيسية
+        </button>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <i class="fas fa-home"></i>
+          الرئيسية
+        </div>
+        <div class="nav-item" style="opacity: 0.5">
+          <i class="fas fa-history"></i>
+          سجل الرحلات
+        </div>
+        <div class="nav-item" style="opacity: 0.5">
+          <i class="fas fa-user"></i>
+          حسابي
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // دوال التنقل بين الشاشات
+      function goToScan() {
+        showScreen("scanScreen");
+        // محاكاة عملية المسح لمدة 3 ثواني ثم الانتقال للنجاح
+        setTimeout(() => {
+          showScreen("successScreen");
+        }, 3000);
+      }
+
+      function cancelScan() {
+        showScreen("homeScreen");
+      }
+
+      function resetApp() {
+        showScreen("homeScreen");
+      }
+
+      // دالة مساعدة لإظهار شاشة وإخفاء الباقي
+      function showScreen(screenId) {
+        // إخفاء كل الشاشات
+        document.querySelectorAll(".screen-content").forEach((screen) => {
+          screen.classList.remove("active");
+        });
+        // إظهار الشاشة المطلوبة
+        document.getElementById(screenId).classList.add("active");
+
+        // التحكم في شريط التنقل (إخفاؤه في شاشة المسح والنجاح للتركيز)
+        const nav = document.querySelector(".bottom-nav");
+        if (screenId === "homeScreen") {
+          nav.style.display = "flex";
+        } else {
+          nav.style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
